@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="0de37dc6-352c-41b7-b7fa-d30ebec04ae0" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:listener-config name="HTTP_Listener_config1" doc:name="HTTP Listener config" doc:id="b33b96ad-b2cd-4813-b6f9-961fddf47a19" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<flow name="flowcontrolFlow" doc:id="69756a5f-5107-4b00-9b61-b52e366d4f40" >
+		<http:listener doc:name="Listener" doc:id="fce397a7-e09a-48a7-90f6-e1362ba350ef" config-ref="HTTP_Listener_config" path="/flowcontrol1"/>
+		<set-payload value='#[{"a":"a", "b":"b"}]' doc:name="Set Payload" doc:id="fe8b9e79-055e-4a11-ba5f-4c6b68ccf3d1" />
+		<choice doc:name="Choice" doc:id="8a56fca3-2794-4336-b738-1acb8d59f482" >
+			<when expression="#[payload.b == attributes.queryParams.name]">
+				<ee:transform doc:name="Transform Message" doc:id="026cf36a-9c88-4f29-aad9-82b06b59110b" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{msg : attributes.queryParams.name,
+	return :"msg is sent"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<when expression="#[payload.a == attributes.queryParams.name]">
+				<ee:transform doc:name="Transform Message" doc:id="3091e724-bfb1-45d4-a95e-51f180b7fab0" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	msg: attributes.queryParams.name,
+	return: "msg is sent"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<set-payload value='#["pls try again"]' doc:name="Set Payload" doc:id="8179a731-0641-4a14-a859-79971136b573" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="flowcontrolFlow1" doc:id="550ee62a-effb-429a-9af8-97d2e8784d70" >
+		<http:listener doc:name="Listener" doc:id="30f9bc75-3933-4cc0-ad7f-596f9b99b2b4" config-ref="HTTP_Listener_config1" path="/flowcontrol2"/>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="d4826ba9-c75f-4b5b-b224-27eaa32b5d18" >
+			<route >
+				<ee:transform doc:name="Transform Message" doc:id="1d538bd6-d450-41b1-b8b5-516a82837e76" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{"name":"selam",
+ "age" :25
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</route>
+			<route >
+				<ee:transform doc:name="Transform Message" doc:id="7d87b362-64df-40f9-8824-ad95e553781d" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{"address": "1234 s lory",
+ "phone":"7356537896"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="adccdc93-d593-4949-88f5-28debb713273" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+flatten(payload..payload)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
